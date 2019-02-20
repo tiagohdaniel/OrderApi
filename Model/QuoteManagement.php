@@ -21,14 +21,34 @@ class QuoteManagement
      */
     private $_quoteManagement;
 
+    /**
+     * @var \Magento\Quote\Model\Quote\ItemFactory
+     */
+    private $_item;
+
+    /**
+     * @var \Magento\Quote\Model\Quote\Item\RepositoryFactory
+     */
+    private $_itemRepository;
+
     public function __construct
     (
-        \Magento\Quote\Model\QuoteManagementFactory $quoteManagement
+        \Magento\Quote\Model\QuoteManagementFactory       $quoteManagement,
+        \Magento\Quote\Model\Quote\ItemFactory            $item,
+        \Magento\Quote\Model\Quote\Item\RepositoryFactory $itemRepository
     )
     {
         $this->_quoteManagement = $quoteManagement;
+        $this->_item            = $item;
+        $this->_itemRepository  = $itemRepository;
     }
 
+    /**
+     * Create empty cart
+     *
+     * @param $id
+     * @return int|mixed
+     */
     public function createEmptyCartForCustomer($id)
     {
         /** @var  $quoteManagementFactory */
@@ -36,6 +56,31 @@ class QuoteManagement
         $quoteId                = $quoteManagementFactory->createEmptyCartForCustomer($id);
 
         return $quoteId;
+    }
+
+    /**
+     * Add items to cart
+     *
+     * @param $items
+     * @param $quoteId
+     * @return \Magento\Quote\Api\Data\CartItemInterface
+     */
+    public function addProducts($items, $quoteId)
+    {
+        /** @var  $itemFactory */
+        $itemFactory            = $this->_item->create();
+
+        /** @var  $itemRepositoryFactory */
+        $itemRepositoryFactory = $this->_itemRepository->create();
+
+        foreach ($items as $item) {
+            $itemFactory->setSku($item["sku"]);
+            $itemFactory->setQty($item["qty"]);
+            $itemFactory->setQuoteId($quoteId);
+            $quoteItemObj = $itemRepositoryFactory->save($itemFactory);
+        }
+
+        return $quoteItemObj;
     }
 
 }

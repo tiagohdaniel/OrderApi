@@ -118,15 +118,23 @@ class OrderPlace
         $requestObj             =  $this->_requestFactory->create();
         $this->_bodyParams      = $requestObj->getBodyParams();
         $customer               = $this->setCustomerData($this->_bodyParams['customer'], $this->_bodyParams['password']);
-        /*$customerToken          = $this->_customerTokenFactory->createCustomerAccessToken
-                                    ($customer->getEmail(), $this->_bodyParams["password"]);*/
+        $customerToken          = $this->_customerTokenFactory->createCustomerAccessToken
+                                    ($customer->getEmail(), $this->_bodyParams["password"]);
 
         /** @var  $quoteManagementFactory */
         $quoteManagementFactory = $this->_quoteManagement->create();
 
         $quoteId                = $quoteManagementFactory->createEmptyCartForCustomer($customer->getId());
+        $quoteItemObj           = $quoteManagementFactory->addProducts($this->_bodyParams['cartItem'], $quoteId);
     }
 
+    /**
+     * Setting customer data
+     *
+     * @param $customerData
+     * @param $password
+     * @return \Magento\Customer\Api\Data\CustomerInterface
+     */
     public function setCustomerData($customerData, $password)
     {
         /** @var \Magento\Customer\Model\AccountManagement $accountManagement */
@@ -138,15 +146,19 @@ class OrderPlace
         $customer->setEmail($customerData['email']);
         $customer->setFirstname($customerData['firstname']);
         $customer->setLastname($customerData['lastname']);
-
         $addressData        = $this->_setCustomerAddressData($customerData['addresses']);
-
         $customer->setData('addresses', $addressData);
         $output             = $accountManagement->createAccount($customer, $password);
+
         return $output;
     }
 
-
+    /**
+     * Setting Address data for the customer
+     *
+     * @param $addressData
+     * @return \Magento\Customer\Model\AddressFactory
+     */
     private function _setCustomerAddressData($addressData)
     {
         /** @var \Magento\Customer\Model\AddressFactory $address */
